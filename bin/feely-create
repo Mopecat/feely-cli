@@ -1,0 +1,108 @@
+#!/usr/bin/env node
+
+const path=require('path') // 获取路径
+const home=require('user-home') // 获取根目录
+const exists = require('fs').existsSync // 用于检测当前路径是否存在
+const inquirer=require('inquirer')  // 命令行交互
+const download=require('download-git-repo') // 用于下载远程git仓库
+const chalk=require('chalk') // 高亮显示打印信息
+const ora=require('ora')  // 命令行的加加载条
+const rm = require('rimraf').sync // 相当于 ‘rm -rf’命令
+const checkVersion=require('../lib/check-version') // 用于检查版本
+const getTemplateList = require('../lib/feely-cli-config')  // 获取模板列表
+const generate=require('../lib/generate-project') // 基于模板构建项目
+const GITURL = 'github:Mopecat/template' // 远程存放模板的仓库url
+//检测版本并执行Main函数
+checkVersion(()=>{
+    Main()
+})
+  
+  /**
+   * Main
+   */
+  function Main(){
+    // 本地模板存放仓库
+    const tmpRepo=path.resolve(home,'.feely-cli-templates')
+    // 读取配置文件
+    const templateArr = getTemplateList()
+    // 获取模板列表
+    const choices=templateArr.map(template=>{
+        return {
+            name:`${template.name} - ${template.description}`,
+            value:template.name
+        }
+    })
+    inquirer.prompt([{
+        type:'list',
+        name:'template',
+        choices,
+        message:'选择你要模板'
+    }]).then(answer=>{
+        //模板名称
+        const tmpName=answer.template
+        // 远程模板地址
+        const tmpUrl=templateArr.find(template=>template.name===tmpName).url
+        const tmpDest=path.join(tmpRepo,tmpName)
+        // 判断本地是否存在当前模板 （主要用于模板如果有更新 用的时候可以手动更新本地的模板）
+        if(exists(tmpDest)){
+            inquirer.prompt([
+            {
+                type:'confirm',
+                name:'override',
+                message:'本地已经存在当前模板覆盖吗?'
+            }
+            ]).then(answer=>{
+                console.log('answer',answer)
+            if(answer.override) {
+                rm(tmpDest)
+                downloadAndGenerate(tmpRepo,tmpName,tmpUrl)
+            }else{
+                console.log('走了这里？')
+                generate(tmpDest)
+            }
+            });
+        }else{
+            downloadAndGenerate(tmpRepo,tmpName,tmpUrl)
+        }  
+    })
+  }
+  /**
+   * 
+   * @param {String} tmpRepo 本地存放模板路径
+   * @param {String} tmpName 模板名称
+   * @param {String} tmpUrl  模板路径
+   */
+  function downloadAndGenerate(tmpRepo,tmpName,tmpUrl){
+    const spinner=ora('模板下载中……')
+    const tmpDest=path.join(tmpRepo,tmpName) 
+    console.log('tmpDest',tmpDest)
+    spinner.start()
+    download(`${GITURL}#master`,tmpRepo,{
+    clone:false
+    },(err)=>{
+        if(err){
+            spinner.fail(chalk.red('下载模板失败'))
+            console.log(err)
+        }else{
+            spinner.succeed(chalk.green('下载模板成功'))
+            spinner.succeed(chalk.green('接下来要渲染模板拉~~'))
+            generate(tmpDest)
+        }
+    })
+  }
+   /**
+   * 
+   * @param {String} file 文件路径
+   */
+  function templateList(file){
+      let aaa = fs.readFile(file,'utf8',function(err,data){
+          if(err){
+              console.log('读取配置错误')
+          }else{
+              console.log(JSON.parse(data))
+            return JSON.parse(data)
+          }
+      })
+  }
+
+

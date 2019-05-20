@@ -1,0 +1,33 @@
+{
+  "name": "feely-cli",
+  "version": "1.0.8",
+  "description": "easy cli",
+  "directories": {
+    "lib": "lib"
+  },
+  "bin": {
+    "feely": "bin/feely"
+  },
+  "author": "Mopecat",
+  "license": "MIT",
+  "dependencies": {
+    "async": "^3.0.0",
+    "chalk": "^2.4.2",
+    "commander": "^2.20.0",
+    "consolidate": "^0.15.1",
+    "download-git-repo": "^1.1.0",
+    "handlebars": "^4.1.2",
+    "inquirer": "^6.3.1",
+    "metalsmith": "^2.3.0",
+    "ora": "^3.4.0",
+    "request": "^2.88.0",
+    "rimraf": "^2.6.3",
+    "semver": "^6.0.0",
+    "user-home": "^2.0.0"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "README.md"
+  ]
+}
